@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dog Clicker — Ultimate Kennel Edition</title>
+  <style>
+    :root {
+      --bg-espresso: #16110d;
+      --bg-kennel: #221912;
+      --bg-leather: #2e2118;
+      --bg-leather-light: #3d2c20;
+      --border-stitch: #5c422f;
+      --gold-bone: #f5c542;
+      --gold-bright: #ffe07d;
+      --gold-glow: rgba(245, 197, 66, 0.45);
+      --diamond-cyan: #00f0ff;
+      --cosmic-purple: #b500ff;
+      --tan-cream: #f4e8d1;
+      --tan-muted: #b8a386;
+      --accent-amber: #e68a2e;
+      --accent-green: #5cb85c;
+      --danger-red: #d9534f;
+      --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-espresso);
+      color: var(--tan-cream);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ================= HEADER ================= */
+    header {
+      background: linear-gradient(180deg, var(--bg-leather) 0%, var(--bg-kennel) 100%);
+      border-bottom: 3px dashed var(--border-stitch);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { font-size: 1.9rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
+    .brand h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.5px; color: var(--gold-bone); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65); }
+    .rank-badge { background: var(--bg-espresso); border: 1px solid var(--border-stitch); color: var(--gold-bright); padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.4px; }
+    .header-controls { display: flex; align-items: center; gap: 10px; }
+    .save-status { font-size: 0.78rem; color: var(--tan-muted); margin-right: 6px; opacity: 0.85; transition: opacity 0.25s; }
+
+    .btn-header {
+      background: var(--bg-leather-light); color: var(--tan-cream); border: 2px solid var(--border-stitch);
+      padding: 7px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .btn-header:hover { background: var(--border-stitch); border-color: var(--gold-bone); transform: translateY(-1px); }
+    .btn-header.sound-on { border-color: var(--gold-bone); color: var(--gold-bright); }
+    .btn-header.danger:hover { background: var(--danger-red); border-color: #ff7b77; color: #fff; }
+
+    select.btn-header {
+      appearance: none; padding-right: 20px; outline: none; text-align: center;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%23f4e8d1" viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat; background-position: right 4px center;
+    }
+    select.btn-header option { background: var(--bg-espresso); color: var(--tan-cream); }
+
+    /* ================= MAIN LAYOUT ================= */
+    .game-container { flex: 1; display: grid; grid-template-columns: 1fr 430px; overflow: hidden; }
+
+    /* ================= LEFT ARENA ================= */
+    .click-arena {
+      position: relative; display: flex; flex-direction: column; align-items: center;
+      justify-content: space-between; padding: 24px; overflow: hidden;
+      background: radial-gradient(circle at 50% 48%, #362519 0%, #1c140e 70%, #120d09 100%); transition: background 0.4s ease;
+    }
+    .click-arena.frenzy-golden { background: radial-gradient(circle at 50% 48%, #4a2110 0%, #291208 70%, #1a0b04 100%); animation: frenzyBgPulse 0.5s infinite alternate; }
+    .click-arena.frenzy-cosmic { background: radial-gradient(circle at 50% 48%, #20083b 0%, #0c021f 70%, #03000a 100%); animation: cosmicBgPulse 0.3s infinite alternate; }
+
+    @keyframes frenzyBgPulse { 0% { box-shadow: inset 0 0 0px rgba(245, 197, 66, 0); } 100% { box-shadow: inset 0 0 80px rgba(245, 197, 66, 0.4); } }
+    @keyframes cosmicBgPulse { 0% { box-shadow: inset 0 0 0px rgba(181, 0, 255, 0); } 100% { box-shadow: inset 0 0 120px rgba(0, 240, 255, 0.5); } }
+    
+    @keyframes sugarRushPulse {
+      0% { box-shadow: 0 0 10px rgba(245, 197, 66, 0.4); border-color: rgba(245, 197, 66, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(245, 197, 66, 1); border-color: rgba(245, 197, 66, 1); }
+      100% { box-shadow: 0 0 10px rgba(245, 197, 66, 0.4); border-color: rgba(245, 197, 66, 0.4); }
+    }
+    .hud-board.sugar-rush-active { animation: sugarRushPulse 0.6s infinite; }
+
+    .arena-pattern {
+      position: absolute; inset: -200px;
+      background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23f5c542' fill-opacity='0.055'%3E%3Cpath d='M32 22c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L17.7 41.3C16.7 40.5 15.4 40 14 40c-3.3 0-6 2.7-6 6s2.7 6 6 6c1.5 0 2.9-.6 4-1.5 0 3.3 2.7 6 6 6s6-2.7 6-6c0-1.4-.5-2.7-1.3-3.7l9.6-9.6c1 .8 2.3 1.3 3.7 1.3 3.3 0 6-2.7 6-6s-2.7-6-6-6c-1.5 0-2.9.6-4 1.5 0-3.3-2.7-6-6-6z'/%3E%3Cellipse cx='85' cy='88' rx='9' ry='7'/%3E%3Ccircle cx='74' cy='76' r='3.8'/%3E%3Ccircle cx='81' cy='72' r='3.8'/%3E%3Ccircle cx='89' cy='72' r='3.8'/%3E%3Ccircle cx='96' cy='76' r='3.8'/%3E%3C/g%3E%3C/svg%3E");
+      animation: driftPattern 26s linear infinite; pointer-events: none; z-index: 1;
+    }
+    @keyframes driftPattern { 0% { transform: translate(0, 0); } 100% { transform: translate(120px, 120px); } }
+
+    /* ================= HUD STATS ================= */
+    .hud-board {
+      position: relative; z-index: 10; background: rgba(34, 25, 18, 0.9); border: 2px dashed var(--border-stitch);
+      border-radius: 18px; padding: 16px 34px; text-align: center; box-shadow: var(--card-shadow);
+      min-width: 340px; backdrop-filter: blur(6px); transition: all 0.3s;
+    }
+    .treat-count { font-size: 2.75rem; font-weight: 900; color: var(--gold-bone); line-height: 1.05; text-shadow: 0 3px 10px rgba(245, 197, 66, 0.35); font-variant-numeric: tabular-nums; }
+    .treat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--tan-muted); margin-top: 2px; font-weight: 700; }
+    .sub-metrics { display: flex; justify-content: center; gap: 20px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(92, 66, 47, 0.5); font-size: 0.9rem; color: var(--tan-cream); font-weight: 600; }
+    .sub-metrics span strong { color: var(--gold-bright); }
+
+    .frenzy-banner { display: none; margin-top: 10px; background: linear-gradient(90deg, #b86b11, #f5c542, #b86b11); color: #1a1108; font-weight: 900; font-size: 0.86rem; padding: 6px 16px; border-radius: 999px; letter-spacing: 0.6px; box-shadow: 0 0 18px rgba(245, 197, 66, 0.75); animation: pulseFrenzyBanner 0.7s infinite alternate; }
+    .frenzy-banner.cosmic { background: linear-gradient(90deg, #00f0ff, #b500ff, #ff0055); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); box-shadow: 0 0 25px rgba(181, 0, 255, 0.85); }
+    .frenzy-banner.active { display: inline-block; }
+    @keyframes pulseFrenzyBanner { from { transform: scale(0.98); } to { transform: scale(1.03); } }
+
+    /* ================= CENTER DOG STAGE ================= */
+    .dog-stage { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; width: 320px; height: 320px; }
+    .dog-aura { position: absolute; width: 270px; height: 270px; border-radius: 50%; background: radial-gradient(circle, rgba(245, 197, 66, 0.35) 0%, rgba(230, 138, 46, 0.12) 55%, transparent 75%); filter: blur(12px); animation: auraPulse 3s ease-in-out infinite; pointer-events: none; z-index: 1; transition: all 0.3s ease; }
+    .dog-aura.frenzy-golden { width: 320px; height: 320px; background: radial-gradient(circle, rgba(255, 224, 125, 0.85) 0%, rgba(245, 197, 66, 0.45) 55%, transparent 78%); filter: blur(16px); }
+    .dog-aura.frenzy-cosmic { width: 360px; height: 360px; background: radial-gradient(circle, rgba(0, 240, 255, 0.85) 0%, rgba(181, 0, 255, 0.55) 55%, transparent 78%); filter: blur(18px); }
+    @keyframes auraPulse { 0%, 100% { transform: scale(0.96); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
+    .bone-burst-layer { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+    
+    .dog-button { 
+      position: relative; z-index: 5; width: 235px; height: 235px; border-radius: 50%; 
+      background: radial-gradient(circle at 35% 30%, #4a3525, #24180f); 
+      border: 6px solid var(--gold-bone); 
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65), inset 0 4px 12px rgba(255, 255, 255, 0.15), 0 0 24px var(--gold-glow); 
+      cursor: pointer; display: flex; align-items: center; justify-content: center; 
+      overflow: hidden; outline: none; touch-action: manipulation;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .dog-button:hover { box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 34px rgba(245, 197, 66, 0.65); }
+    .dog-button.frenzy-golden { border-color: #fff3b0; box-shadow: 0 0 0 6px rgba(245, 197, 66, 0.45), 0 0 38px 12px rgba(245, 197, 66, 0.85), inset 0 0 26px rgba(245, 197, 66, 0.55); }
+    .dog-button.frenzy-cosmic { border-color: #00f0ff; box-shadow: 0 0 0 6px rgba(181, 0, 255, 0.45), 0 0 45px 15px rgba(0, 240, 255, 0.85), inset 0 0 30px rgba(181, 0, 255, 0.65); }
+    #dogTarget { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5)); transition: transform 0.15s ease; }
+
+    /* ================= FOOTER STATS BAR ================= */
+    .arena-footer { position: relative; z-index: 10; display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; background: rgba(34, 25, 18, 0.88); border: 1px solid var(--border-stitch); padding: 10px 22px; border-radius: 12px; font-size: 0.82rem; color: var(--tan-muted); }
+    .arena-footer span { display: flex; align-items: center; gap: 4px; }
+    .arena-footer strong { color: var(--tan-cream); }
+    .tag-bonus { color: var(--gold-bright) !important; text-shadow: 0 0 5px rgba(245, 197, 66, 0.5); }
+
+    /* ================= FLOATING TEXT & PARTICLES ================= */
+    .floating-number { position: fixed; pointer-events: none; font-weight: 900; font-size: 1.45rem; color: var(--tan-cream); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85); z-index: 100; animation: floatUpFade 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .floating-number.crit { font-size: 2.25rem; color: var(--danger-red); text-shadow: 0 0 14px rgba(217, 83, 79, 0.95), 0 3px 8px rgba(0, 0, 0, 0.95); animation: critFloatUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .floating-number.bounty { font-size: 2rem; color: var(--diamond-cyan); text-shadow: 0 0 15px rgba(0, 240, 255, 0.9); animation: critFloatUp 1.5s ease-out forwards; }
+    @keyframes floatUpFade { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.85); } 25% { opacity: 1; transform: translate(-50%, -22px) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -75px) scale(0.95); } }
+    @keyframes critFloatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(0.6) rotate(-6deg); } 25% { opacity: 1; transform: translate(-50%, -28px) scale(1.25) rotate(4deg); } 100% { opacity: 0; transform: translate(-50%, -95px) scale(1.05) rotate(0deg); } }
+    .drifting-bone { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; pointer-events: none; opacity: 0.65; transform: translate(-50%, -50%); animation: boneOutward 0.85s ease-out forwards; }
+    @keyframes boneOutward { 0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.5) rotate(0deg); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15) rotate(var(--rot)); } }
+
+    /* ================= SPECIAL BONE EVENTS ================= */
+    .special-bone-event { position: absolute; z-index: 45; width: 68px; height: 68px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.12s ease; }
+    .special-bone-event:hover { transform: scale(1.18); }
+    .special-bone-event img { width: 100%; height: 100%; object-fit: contain; animation: spinGoldenBone 2.2s linear infinite; }
+    .bone-golden { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.95)); }
+    .bone-diamond { filter: drop-shadow(0 0 20px var(--diamond-cyan)); }
+    .bone-cosmic { filter: drop-shadow(0 0 25px var(--cosmic-purple)); width: 85px; height: 85px; }
+    @keyframes spinGoldenBone { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
+
+    /* ================= RIGHT SIDEBAR ================= */
+    .shop-panel { background: var(--bg-kennel); border-left: 3px dashed var(--border-stitch); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .sidebar-tabs { display: flex; background: var(--bg-leather); padding: 12px 14px 0 14px; border-bottom: 2px solid var(--border-stitch); gap: 8px; }
+    .tab-btn { flex: 1; background: var(--bg-espresso); color: var(--tan-muted); border: 2px solid var(--border-stitch); border-bottom: none; border-radius: 12px 12px 0 0; padding: 12px 0; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; touch-action: manipulation; }
+    .tab-btn:hover { background: var(--bg-leather-light); color: var(--tan-cream); }
+    .tab-btn.active { background: var(--bg-kennel); color: var(--gold-bone); border-color: var(--border-stitch); border-bottom: 2px solid var(--bg-kennel); margin-bottom: -2px; z-index: 2; box-shadow: inset 0 4px 10px rgba(0,0,0,0.2); }
+    
+    .scroll-container { flex: 1; overflow-y: auto; padding: 14px 14px 90px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .scroll-container::-webkit-scrollbar { width: 8px; }
+    .scroll-container::-webkit-scrollbar-track { background: var(--bg-espresso); }
+    .scroll-container::-webkit-scrollbar-thumb { background: var(--border-stitch); border-radius: 4px; }
+
+    /* ================= CARDS (UPGRADES & POWERUPS) ================= */
+    .upgrade-card, .powerup-card { background: linear-gradient(135deg, var(--bg-leather) 0%, #251a12 100%); border: 2px solid var(--border-stitch); border-radius: 14px; padding: 11px 14px; display: grid; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; flex-shrink: 0; }
+    .upgrade-card { grid-template-columns: 52px 1fr auto; }
+    .powerup-card { grid-template-columns: 52px 1fr; }
+    .upgrade-card:hover:not(.locked), .powerup-card:hover:not(.locked) { border-color: var(--gold-bone); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
+    .upgrade-card:active:not(.locked), .powerup-card:active:not(.locked) { transform: translateY(0); }
+    .upgrade-card.locked, .powerup-card.locked { opacity: 0.52; cursor: not-allowed; filter: grayscale(0.35); }
+    
+    .icon-slot { width: 52px; height: 52px; border-radius: 12px; background: var(--bg-espresso); border: 1px solid var(--border-stitch); display: flex; align-items: center; justify-content: center; position: relative; padding: 4px; }
+    .icon-slot svg { width: 100%; height: 100%; }
+    
+    .info-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .title { font-weight: 800; font-size: 0.95rem; color: var(--tan-cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .desc { font-size: 0.75rem; color: var(--tan-muted); }
+    .meta-row { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+    .cost { font-size: 0.85rem; font-weight: 800; color: var(--gold-bone); }
+    .benefit { font-size: 0.74rem; color: var(--accent-amber); font-weight: 700; background: rgba(230, 138, 46, 0.14); padding: 1px 7px; border-radius: 6px; }
+    
+    .owned-badge { background: var(--bg-espresso); border: 1px solid var(--border-stitch); color: var(--tan-cream); font-weight: 900; font-size: 1.05rem; min-width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+
+    /* Powerup specific */
+    .pu-action-row { margin-top: 6px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+    .pu-btn { background: var(--bg-leather-light); border: 1px solid var(--border-stitch); color: var(--tan-cream); padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.1s; touch-action: manipulation; }
+    .powerup-card:hover:not(.locked) .pu-btn { background: var(--border-stitch); color: #fff; }
+    .pu-bar-bg { flex: 1; height: 8px; background: rgba(0,0,0,0.4); border-radius: 4px; overflow: hidden; position: relative; }
+    .pu-bar-fill { height: 100%; background: var(--gold-bright); width: 0%; transition: width 0.1s linear; }
+    .pu-bar-fill.cooldown { background: var(--accent-amber); opacity: 0.6; }
+    
+    .rebirth-banner-btn { display: none; background: linear-gradient(135deg, #d4af37 0%, #aa801b 100%); color: #1a1108; font-weight: 900; text-align: center; padding: 10px; margin: 0 14px 10px 14px; border-radius: 12px; cursor: pointer; border: 2px solid #fff3b0; box-shadow: 0 4px 15px rgba(245, 197, 66, 0.4); transition: all 0.2s; flex-shrink: 0; }
+    .rebirth-banner-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 20px rgba(245, 197, 66, 0.6); }
+
+    /* ================= MODALS ================= */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(10, 7, 5, 0.85); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 200; }
+    .modal-backdrop.open { display: flex; }
+    .modal-box { background: var(--bg-leather); border: 3px dashed var(--gold-bone); border-radius: 18px; width: 92%; max-width: 440px; padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); text-align: center; }
+    .modal-box h3 { color: var(--gold-bone); margin-bottom: 14px; font-size: 1.6rem; }
+    .modal-box p { font-size: 0.95rem; color: var(--tan-cream); margin-bottom: 12px; line-height: 1.5; }
+    .modal-highlight { font-size: 1.3rem; color: var(--gold-bright); font-weight: 900; margin: 16px 0; background: rgba(245, 197, 66, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(245, 197, 66, 0.3); }
+    .modal-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
+    .btn-large { padding: 10px 20px; font-size: 1rem; border-radius: 10px; font-weight: 800; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; touch-action: manipulation; }
+    .btn-confirm { background: linear-gradient(135deg, #d4af37 0%, #aa801b 100%); color: #1a1108; border-color: #fff3b0; }
+    .btn-confirm:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(245, 197, 66, 0.5); }
+    .btn-cancel { background: var(--bg-espresso); color: var(--tan-muted); border-color: var(--border-stitch); }
+    .btn-cancel:hover { background: var(--border-stitch); color: var(--tan-cream); }
+
+    @media (max-width: 900px) {
+      body { height: auto; overflow: auto; }
+      .game-container { grid-template-columns: 1fr; overflow: visible; }
+      .click-arena { min-height: 520px; }
+      .shop-panel { border-left: none; border-top: 3px dashed var(--border-stitch); height: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon">🐾</span>
+      <div><h1 id="ui-title">DOG CLICKER</h1></div>
+      <span id="rankBadge" class="rank-badge">Stray Pup</span>
+    </div>
+    <div class="header-controls">
+      <span id="saveStatus" class="save-status">Auto-saved</span>
+      <select id="langSelect" class="btn-header">
+        <option value="en">EN</option>
+        <option value="ru">RU</option>
+        <option value="es">ES</option>
+      </select>
+      <button id="soundToggleBtn" class="btn-header sound-on">🔊 Sound On</button>
+      <button id="resetBtn" class="btn-header danger">🗑️ Reset</button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN GAME AREA ================= -->
+  <main class="game-container">
+    <section id="clickArena" class="click-arena">
+      <div class="arena-pattern"></div>
+      <div id="hudBoard" class="hud-board">
+        <div id="treatCounter" class="treat-count">0</div>
+        <div id="ui-treats-lbl" class="treat-label">Dog Treats</div>
+        <div class="sub-metrics">
+          <span><span id="ui-tps-lbl">Per Second:</span> <strong id="tpsDisplay">0</strong></span>
+          <span><span id="ui-tpc-lbl">Per Click:</span> <strong id="tpcDisplay">1</strong></span>
+          <span><strong id="ui-crit-lbl">Crit: 3% (10x)</strong></span>
+        </div>
+        <div id="frenzyBanner" class="frenzy-banner">
+          <span id="frenzyText">🔥 BARK FRENZY: 7x CLICKS</span> (<span id="frenzyTimer">15.0</span>s)
+        </div>
+      </div>
+      <div class="dog-stage">
+        <div id="dogAura" class="dog-aura"></div>
+        <div id="boneBurstLayer" class="bone-burst-layer"></div>
+        <button id="dogButton" class="dog-button" aria-label="Click the Dog for Treats">
+          <img id="dogTarget" src="doge-logo.png" alt="Doge" style="width: 180px; height: 180px; object-fit: contain; pointer-events: none; user-select: none;">
+        </button>
+      </div>
+      <div class="arena-footer">
+        <span><span id="ui-stat-clicks">Hand Clicks:</span> <strong id="statClicks">0</strong></span>
+        <span><span id="ui-stat-crits">Crits:</span> <strong id="statCrits">0</strong></span>
+        <span><span id="ui-stat-bones">Rare Bones:</span> <strong id="statBones">0 G | 0 D | 0 C</strong></span>
+        <span title="Lifetime treats generate Golden Dog Tags upon Rebirth!"><span id="ui-stat-peak">Peak:</span> <strong id="statHighBalance">0</strong></span>
+        <span><span id="ui-stat-tags">Tags:</span> <strong id="statTags" class="tag-bonus">0 (+0%)</strong></span>
+      </div>
+    </section>
+
+    <aside class="shop-panel">
+      <div class="sidebar-tabs">
+        <button id="tabUpgradesBtn" class="tab-btn active">Upgrades</button>
+        <button id="tabPowerupsBtn" class="tab-btn">Power-Ups</button>
+      </div>
+      
+      <div id="shopList" class="scroll-container">
+        <div id="rebirthBtn" class="rebirth-banner-btn" title="Reset progress for permanent multiplier tags!">
+          🌟 <span id="ui-rebirth-btn">Rebirth</span> ( <span id="pendingTagsDisplay">0</span> <span id="ui-stat-tags2">Tags</span> )
+        </div>
+        <!-- Shop cards injected here -->
+      </div>
+
+      <div id="powerupsList" class="scroll-container" style="display:none;">
+        <!-- Power-up cards injected here -->
+      </div>
+    </aside>
+  </main>
+
+  <!-- ================= REBIRTH MODAL ================= -->
+  <div id="rebirthModal" class="modal-backdrop">
+    <div class="modal-box">
+      <h3 id="ui-modal-title">🐾 New Leash on Life</h3>
+      <p id="ui-modal-p1">Rebirthing will reset your current treats, TPS, and upgrades. Lifetime stats and rare bones are kept.</p>
+      <div class="modal-highlight">
+        <span id="ui-modal-earn">You will earn:</span> <strong id="modalTagEarn" style="font-size:1.6rem;display:block;">0</strong>
+        <span id="ui-modal-tags">Golden Dog Tags</span>
+      </div>
+      <p id="ui-modal-p2">Current Multiplier: <strong id="modalCurMult">100%</strong> ➔ New Multiplier: <strong id="modalNewMult">115%</strong></p>
+      <div class="modal-actions">
+        <button id="btnConfirmRebirth" class="btn-large btn-confirm">Confirm Rebirth</button>
+        <button id="btnCancelRebirth" class="btn-large btn-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /********************************************************************
+     * 1. TRI-LANGUAGE DICTIONARY (EN / RU / ES)
+     ********************************************************************/
+    const I18N = {
+      en: {
+        title: "DOG CLICKER", treats: "Dog Treats", tps: "Per Second:", tpc: "Per Click:",
+        critPre: "Crit: 3% (", critPost: "x)", frenzyGold: "🔥 BARK FRENZY: 7x CLICKS", frenzyCosmic: "🌌 HYPER OVERDRIVE: 25x CLICKS",
+        statClicks: "Hand Clicks:", statCrits: "Crits:", statBones: "Rare Bones:", statPeak: "Peak:", statTags: "Tags:",
+        tabUpgrades: "Upgrades", tabPowerups: "Power-Ups",
+        rebirthBtn: "Rebirth", soundOn: "🔊 Sound On", soundOff: "🔇 Sound Off", resetBtn: "🗑️ Reset", saveText: "Auto-saved",
+        modalTitle: "🐾 New Leash on Life", modalP1: "Rebirthing will reset your current treats, TPS, and upgrades. Lifetime stats and power-ups are kept.",
+        modalEarn: "You will earn:", modalTags: "Golden Dog Tags", modalP2Pre: "Current Multiplier:", modalP2Mid: "➔ New Multiplier:",
+        btnConfirm: "Confirm Rebirth", btnCancel: "Cancel", floatCrit: "CRIT!", floatBounty: "Treats (Bounty!)",
+        btnActivate: "Activate", btnFree: "FREE", btnMax: "MAX OWNED", txtLevel: "Level"
+      },
+      ru: {
+        title: "DOG CLICKER", treats: "Лакомства", tps: "В секунду:", tpc: "За клик:",
+        critPre: "Крит: 3% (", critPost: "x)", frenzyGold: "🔥 БЕШЕНСТВО: 7x КЛИКОВ", frenzyCosmic: "🌌 ГИПЕРДРАЙВ: 25x КЛИКОВ",
+        statClicks: "Клики:", statCrits: "Криты:", statBones: "Редкие Кости:", statPeak: "Максимум:", statTags: "Жетоны:",
+        tabUpgrades: "Улучшения", tabPowerups: "Усиления",
+        rebirthBtn: "Перерождение", soundOn: "🔊 Звук Вкл", soundOff: "🔇 Звук Выкл", resetBtn: "🗑️ Сброс", saveText: "Сохранено",
+        modalTitle: "🐾 Новая Жизнь", modalP1: "Перерождение сбросит лакомства, TPS и магазин. Усиления и статистика сохранятся.",
+        modalEarn: "Вы получите:", modalTags: "Золотых Жетонов", modalP2Pre: "Текущий множитель:", modalP2Mid: "➔ Новый множитель:",
+        btnConfirm: "Подтвердить", btnCancel: "Отмена", floatCrit: "КРИТ!", floatBounty: "Лакомств (Награда!)",
+        btnActivate: "Включить", btnFree: "БЕСПЛАТНО", btnMax: "МАКС.", txtLevel: "Уровень"
+      },
+      es: {
+        title: "DOG CLICKER", treats: "Golosinas", tps: "Por Segundo:", tpc: "Por Clic:",
+        critPre: "Crítico: 3% (", critPost: "x)", frenzyGold: "🔥 FRENESÍ: 7x CLICS", frenzyCosmic: "🌌 HIPERDIRECTA: 25x CLICS",
+        statClicks: "Clics:", statCrits: "Críticos:", statBones: "Huesos Raros:", statPeak: "Máximo:", statTags: "Placas:",
+        tabUpgrades: "Mejoras", tabPowerups: "Poderes",
+        rebirthBtn: "Renacer", soundOn: "🔊 Sonido Act.", soundOff: "🔇 Sin Sonido", resetBtn: "🗑️ Reiniciar", saveText: "Guardado",
+        modalTitle: "🐾 Nueva Vida", modalP1: "Renacer reiniciará tus golosinas, TPS y la tienda. Las estadísticas y poderes se mantienen.",
+        modalEarn: "Ganarás:", modalTags: "Placas Doradas", modalP2Pre: "Multiplicador actual:", modalP2Mid: "➔ Nuevo Multiplicador:",
+        btnConfirm: "Confirmar", btnCancel: "Cancelar", floatCrit: "¡CRÍTICO!", floatBounty: "Golosinas (¡Premio!)",
+        btnActivate: "Activar", btnFree: "GRATIS", btnMax: "MÁXIMO", txtLevel: "Nivel"
+      }
+    };
+
+    /********************************************************************
+     * 2. ASSETS & AUDIO POOLING (Zero Lag)
+     ********************************************************************/
+    const dogImgSrc = "doge-logo.png";
+    const goldBoneImg = "bone-gold.png";
+    const diamondBoneImg = "bone-diamond.jpg";
+    const cosmicBoneImg = "bone-rainbow.png";
+    const particleImg = "bone-sprite.png";
+    const sparkleImg = "sparkle-sprite.png";
+
+    // Audio pool prevents frame drops during 25x/sec rapid clicks
+    const audioPool = {
+      click: Array.from({length: 10}, () => { const a = new Audio("click.mp3"); a.volume = 0.18; return a; }),
+      crit: Array.from({length: 5}, () => { const a = new Audio("crit.mp3"); a.volume = 0.35; return a; }),
+      buy: Array.from({length: 3}, () => { const a = new Audio("buy.mp3"); a.volume = 0.25; return a; }),
+      frenzy: Array.from({length: 2}, () => { const a = new Audio("frenzy.mp3"); a.volume = 0.35; return a; }),
+      idx: { click: 0, crit: 0, buy: 0, frenzy: 0 }
+    };
+    
+    const bgm = new Audio("song.mp3");
+    bgm.loop = true; bgm.volume = 0.15;
+
+    /********************************************************************
+     * 3. GAME STATE & LOCALSTORAGE
+     ********************************************************************/
+    const STORAGE_KEY = "dog_clicker_ultimate_v7";
+
+    const PU_CATALOG = [
+      { id: "blitz", type: "active", cooldown: 90, duration: 12, name: { en: "Belly Rub Blitz", ru: "Блиц Почесываний", es: "Ráfaga de Caricias" }, desc: { en: "Auto-clicks 25x/sec for 12s.", ru: "Авто-клик 25 раз/сек на 12 сек.", es: "Auto-clic 25x/seg por 12s." }, svg: `<svg viewBox="0 0 100 100"><path d="M30 40 Q50 20 70 40 Q80 60 50 80 Q20 60 30 40Z" fill="#e68a2e"/><path d="M40 50 Q50 60 60 50" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>` },
+      { id: "zoomies", type: "active", cooldown: 180, duration: 30, name: { en: "Sugar Rush Zoomies", ru: "Сахарный Забег", es: "Carrera de Azúcar" }, desc: { en: "Triples total TPS (3x) for 30s.", ru: "Утраивает TPS (3x) на 30 сек.", es: "Triplica TPS (3x) por 30s." }, svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L70 40 L60 40 L80 90 L30 50 L40 50 Z" fill="#f5c542" stroke="#fff" stroke-width="2"/></svg>` },
+      { id: "magnet", type: "active", cooldown: 300, duration: 0, name: { en: "Canine Magnet", ru: "Собачий Магнит", es: "Imán Canino" }, desc: { en: "Instantly spawns 2 random rare bones.", ru: "Призывает 2 случайные редкие кости.", es: "Genera 2 huesos raros al instante." }, svg: `<svg viewBox="0 0 100 100"><path d="M20 50 C20 10 80 10 80 50 L60 50 C60 30 40 30 40 50 Z" fill="#d9534f"/><rect x="20" y="50" width="20" height="20" fill="#fff"/><rect x="60" y="50" width="20" height="20" fill="#fff"/></svg>` },
+      { id: "lucky", type: "perk", baseCost: 50000000, name: { en: "Lucky Whiskers", ru: "Счастливые Усы", es: "Bigotes de la Suerte" }, desc: { en: "Permanently upgrades Crits to 20x yield.", ru: "Навсегда увеличивает Криты до 20x.", es: "Mejora permanente de Críticos a 20x." }, svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#5cb85c"/><path d="M30 50 L45 65 L70 35" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/></svg>` },
+      { id: "doubler", type: "upgrade", baseCost: 5000000, scale: 2.0, maxLevel: 10, name: { en: "Treat Doubler Aura", ru: "Аура Удвоения", es: "Aura Duplicadora" }, desc: { en: "+10% manual click efficiency per level.", ru: "+10% к ручному клику за уровень.", es: "+10% eficiencia de clic por nivel." }, svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#00f0ff" stroke-width="6"/><circle cx="50" cy="50" r="20" fill="#b500ff"/><path d="M50 15 L50 5 M50 85 L50 95 M15 50 L5 50 M85 50 L95 50" stroke="#00f0ff" stroke-width="4"/></svg>` }
+    ];
+
+    const UPGRADES_CATALOG = [
+      { id: "squeaky_toy", name: { en: "Squeaky Ducky", ru: "Резиновая Уточка", es: "Patito de Goma" }, desc: { en: "Reinforces every manual pat with squeaky joy.", ru: "Укрепляет радость каждого нажатия.", es: "Refuerza cada caricia con pura alegría." }, baseCost: 15, cpcBonus: 1, tpsBonus: 0, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#f5c542"/><path d="M60 45 Q75 40 85 50 Q75 60 60 55Z" fill="#e68a2e"/><circle cx="40" cy="40" r="4" fill="#16110d"/></svg>` },
+      { id: "auto_petter", name: { en: "Auto-Petter Glove", ru: "Авто-Гладилка", es: "Guante Acariciador" }, desc: { en: "Mechanical hand gently pats the good boy.", ru: "Механическая рука гладит хорошего мальчика.", es: "Mano mecánica que acaricia suavemente." }, baseCost: 50, cpcBonus: 0, tpsBonus: 2, svgIcon: `<svg viewBox="0 0 100 100"><path d="M40 20 L40 60 Q40 80 60 80 Q80 80 80 60 L80 40 Q80 30 70 30 L70 50 Q60 50 60 30 L60 20 Q60 10 50 10 Q40 10 40 20Z" fill="#f4e8d1" stroke="#5c422f" stroke-width="4"/></svg>` },
+      { id: "bone_stash", name: { en: "Backyard Bone Stash", ru: "Тайник с Костями", es: "Reserva de Huesos" }, desc: { en: "Buried savings yielding steady interest.", ru: "Закопанные сбережения приносят доход.", es: "Ahorros enterrados que dan intereses." }, baseCost: 250, cpcBonus: 0, tpsBonus: 12, svgIcon: `<svg viewBox="0 0 100 100"><path d="M20 70 L80 70 L70 90 L30 90Z" fill="#5c422f"/><path d="M30 40 C20 40 15 50 20 60 L80 60 C85 50 80 40 70 40 Z" fill="#f4e8d1"/></svg>` },
+      { id: "dog_park", name: { en: "Neighborhood Dog Park", ru: "Собачья Площадка", es: "Parque Canino" }, desc: { en: "A bustling hub of tail wags and treats.", ru: "Оживленный центр виляющих хвостов.", es: "Centro animado de colas y golosinas." }, baseCost: 1200, cpcBonus: 0, tpsBonus: 65, svgIcon: `<svg viewBox="0 0 100 100"><path d="M10 80 L90 80 L70 40 L50 60 L30 30 Z" fill="#5cb85c"/><circle cx="80" cy="30" r="10" fill="#f5c542"/></svg>` },
+      { id: "golden_hydrant", name: { en: "Golden Fire Hydrant", ru: "Золотой Гидрант", es: "Hidrante Dorado" }, desc: { en: "Legendary neighborhood monument of prestige.", ru: "Легендарный памятник престижа на районе.", es: "Monumento legendario del barrio." }, baseCost: 6500, cpcBonus: 0, tpsBonus: 360, svgIcon: `<svg viewBox="0 0 100 100"><path d="M35 80 L65 80 L60 30 L40 30 Z M40 30 C40 15 60 15 60 30 M25 50 L75 50" fill="#f5c542" stroke="#e68a2e" stroke-width="4"/></svg>` },
+      { id: "treat_bakery", name: { en: "Artisanal Treat Bakery", ru: "Пекарня Лакомств", es: "Panadería Artesanal" }, desc: { en: "Ovens baking gourmet biscuits 24/7.", ru: "Печи работают круглосуточно.", es: "Hornos de galletas 24/7." }, baseCost: 35000, cpcBonus: 15, tpsBonus: 1450, svgIcon: `<svg viewBox="0 0 100 100"><path d="M30 70 Q50 20 70 70 Q80 80 50 80 Q20 80 30 70" fill="none" stroke="#e68a2e" stroke-width="12"/></svg>` },
+      { id: "diamond_collar", name: { en: "Diamond Studded Collar", ru: "Бриллиантовый Ошейник", es: "Collar de Diamantes" }, desc: { en: "Dazzling haute-couture canine jewelry.", ru: "Высокая собачья мода с бриллиантами.", es: "Joyería canina de alta costura." }, baseCost: 180000, cpcBonus: 0, tpsBonus: 5500, svgIcon: `<svg viewBox="0 0 100 100"><path d="M20 50 Q50 80 80 50 Q50 20 20 50" fill="#00f0ff" stroke="#fff" stroke-width="2"/></svg>` },
+      { id: "orbital_satellite", name: { en: "Canine Orbital Satellite", ru: "Орбитальный Спутник", es: "Satélite Orbital" }, desc: { en: "Beams microwave-warmed biscuits from space.", ru: "Сбрасывает печенье с орбиты.", es: "Envía galletas desde el espacio." }, baseCost: 950000, cpcBonus: 0, tpsBonus: 28000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="#b8a386"/><path d="M10 50 L30 40 L30 60 Z M90 50 L70 40 L70 60 Z" fill="#00f0ff"/></svg>` },
+      { id: "subterranean_vault", name: { en: "Subterranean Bone Vault", ru: "Подземное Хранилище", es: "Bóveda Subterránea" }, desc: { en: "Deep-crust tectonic chambers packed with bones.", ru: "Тектонические камеры, полные костей.", es: "Cámaras llenas de huesos." }, baseCost: 5500000, cpcBonus: 0, tpsBonus: 160000, svgIcon: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="40" fill="#3d2c20"/><path d="M10 40 L50 20 L90 40 Z" fill="#5c422f"/></svg>` },
+      { id: "interstellar_colony", name: { en: "Interstellar Doge Colony", ru: "Межзвездная Колония", es: "Colonia Interestelar" }, desc: { en: "Terraformed moons for zero-gravity fetch.", ru: "Луны для игр без гравитации.", es: "Lunas para jugar sin gravedad." }, baseCost: 35000000, cpcBonus: 0, tpsBonus: 1000000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="#b500ff"/><path d="M10 50 Q50 90 90 50 Q50 10 10 50" fill="none" stroke="#00f0ff" stroke-width="4"/></svg>` },
+      { id: "canine_singularity", name: { en: "Supreme Canine Singularity", ru: "Собачья Сингулярность", es: "Singularidad Canina" }, desc: { en: "All matter becomes a Good Boy.", ru: "Вся материя становится Собакой.", es: "Toda la materia se vuelve perro." }, baseCost: 250000000, cpcBonus: 0, tpsBonus: 8500000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="25" fill="#16110d" stroke="#f5c542" stroke-width="4"/><circle cx="50" cy="50" r="40" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4 4"/></svg>` },
+      { id: "dyson_bark_sphere", name: { en: "Dyson Bark Sphere", ru: "Сфера Дайсона", es: "Esfera de Dyson" }, desc: { en: "Harnesses star energy for treat synthesis.", ru: "Использует энергию звезд для лакомств.", es: "Aprovecha estrellas para crear golosinas." }, baseCost: 1800000000, cpcBonus: 0, tpsBonus: 58000000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="#f5c542"/><path d="M20 50 A30 10 0 0 0 80 50 A30 10 0 0 0 20 50" fill="none" stroke="#e68a2e" stroke-width="4"/><path d="M50 20 A10 30 0 0 0 50 80 A10 30 0 0 0 50 20" fill="none" stroke="#e68a2e" stroke-width="4"/></svg>` },
+      { id: "quantum_collider", name: { en: "Quantum Tail Wag Collider", ru: "Квантовый Коллайдер", es: "Colisionador Cuántico" }, desc: { en: "Subatomic wags break treat barriers.", ru: "Субатомное виляние ломает барьеры.", es: "Rompe barreras con la cola." }, baseCost: 14000000000, cpcBonus: 0, tpsBonus: 420000000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="8" fill="#00f0ff"/><ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="#b500ff" stroke-width="3" transform="rotate(45 50 50)"/><ellipse cx="50" cy="50" rx="40" ry="15" fill="none" stroke="#b500ff" stroke-width="3" transform="rotate(-45 50 50)"/></svg>` },
+      { id: "multiverse_gateway", name: { en: "Multiverse Fetch Gateway", ru: "Врата Мультивселенной", es: "Portal Multiverso" }, desc: { en: "Summons balls from alternate timelines.", ru: "Призывает мячики из других реальностей.", es: "Invoca pelotas infinitas de otros mundos." }, baseCost: 110000000000, cpcBonus: 0, tpsBonus: 3100000000, svgIcon: `<svg viewBox="0 0 100 100"><path d="M50 10 C80 10 90 40 90 50 C90 80 60 90 50 90 C20 90 10 60 10 50 C10 20 40 10 50 10" fill="none" stroke="#00f0ff" stroke-width="6"/><circle cx="50" cy="50" r="10" fill="#5cb85c"/></svg>` },
+      { id: "chrono_zoomies", name: { en: "Chrono-Zoomies Accelerator", ru: "Ускоритель Времени", es: "Acelerador Crono-Zoomies" }, desc: { en: "Bends space-time to zoom.", ru: "Искажает время для скорости.", es: "Doblega el espacio-tiempo para correr." }, baseCost: 450000000000, cpcBonus: 0, tpsBonus: 12500000000, svgIcon: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#f5c542" stroke-width="5"/><path d="M50 50 L70 30 M50 50 L50 20" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M10 50 L30 50 M20 30 L35 40" stroke="#00f0ff" stroke-width="3" stroke-linecap="round"/></svg>` },
+      { id: "celestial_ascension", name: { en: "Celestial Good Boy Ascension", ru: "Божественное Вознесение", es: "Ascensión Celestial" }, desc: { en: "The universe asks HIM who's a good boy.", ru: "Вселенная спрашивает ЕГО, кто хороший.", es: "El universo le pregunta a ÉL." }, baseCost: 1000000000000, cpcBonus: 0, tpsBonus: 35000000000, svgIcon: `<svg viewBox="0 0 100 100"><path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" fill="#f5c542" filter="drop-shadow(0 0 5px #fff)"/><circle cx="50" cy="50" r="15" fill="#16110d"/></svg>` }
+    ];
+
+    const RANKS = [
+      { threshold: 0, title: { en: "Stray Pup", ru: "Бродячий Щенок", es: "Cachorro Callejero" } },
+      { threshold: 250, title: { en: "Good Boy", ru: "Хороший Мальчик", es: "Buen Chico" } },
+      { threshold: 5000, title: { en: "Backyard Dig-Master", ru: "Мастер Раскопок", es: "Maestro Excavador" } },
+      { threshold: 100000, title: { en: "Neighborhood Alpha", ru: "Альфа Района", es: "Alfa del Barrio" } },
+      { threshold: 2500000, title: { en: "Baron Von Bark", ru: "Барон фон Гав", es: "Barón Ladrido" } },
+      { threshold: 50000000, title: { en: "Galactic Shiba", ru: "Галактический Шиба", es: "Shiba Galáctico" } },
+      { threshold: 1000000000, title: { en: "Eternal Treat Deity", ru: "Божество Лакомств", es: "Deidad Eterna" } }
+    ];
+
+    function createDefaultState() {
+      const ownedMap = {};
+      UPGRADES_CATALOG.forEach(u => { ownedMap[u.id] = 0; });
+      return {
+        language: 'en', treats: 0, lifetimeTreats: 0, highBalance: 0, 
+        totalClicks: 0, totalCrits: 0, goldenBonesCaught: 0, diamondBonesCaught: 0, cosmicBonesCaught: 0, goldenTags: 0,
+        muted: false, owned: ownedMap,
+        powerups: { luckyWhiskers: false, treatDoubler: 0, blitzReadyAt: 0, zoomiesReadyAt: 0, magnetReadyAt: 0, blitzEndsAt: 0, zoomiesEndsAt: 0 }
+      };
+    }
+
+    let gameState = createDefaultState();
+    let activeFrenzy = { type: null, timer: 0 }; 
+    let blitzAccumulator = 0;
+
+    function saveGame() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+        const saveEl = document.getElementById("saveStatus");
+        if (saveEl) { saveEl.textContent = I18N[gameState.language].saveText + " ✓"; setTimeout(() => { saveEl.textContent = I18N[gameState.language].saveText; }, 1200); }
+      } catch (e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const def = createDefaultState();
+        gameState.language = parsed.language || 'en';
+        document.getElementById("langSelect").value = gameState.language;
+        gameState.treats = Number(parsed.treats) || 0;
+        gameState.highBalance = Math.max(gameState.treats, Number(parsed.highBalance) || 0);
+        gameState.lifetimeTreats = Number(parsed.lifetimeTreats) || gameState.highBalance;
+        gameState.totalClicks = Number(parsed.totalClicks) || 0;
+        gameState.totalCrits = Number(parsed.totalCrits) || 0;
+        gameState.goldenBonesCaught = Number(parsed.goldenBonesCaught) || 0;
+        gameState.diamondBonesCaught = Number(parsed.diamondBonesCaught) || 0;
+        gameState.cosmicBonesCaught = Number(parsed.cosmicBonesCaught) || 0;
+        gameState.goldenTags = Number(parsed.goldenTags) || 0;
+        gameState.muted = Boolean(parsed.muted);
+        gameState.owned = { ...def.owned, ...(parsed.owned || {}) };
+        gameState.powerups = { ...def.powerups, ...(parsed.powerups || {}) };
+      } catch (e) {}
+    }
+
+    /********************************************************************
+     * 4. MATH & AUDIO
+     ********************************************************************/
+    const SUFFIXES = ["", "", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc"];
+    function formatNumber(num) {
+      if (!isFinite(num) || num < 0) return "0";
+      const floored = Math.floor(num);
+      if (floored <= 999999) return floored.toLocaleString("en-US");
+      const tier = Math.floor(Math.log10(floored) / 3);
+      const scaled = floored / Math.pow(10, tier * 3);
+      return scaled.toFixed(2).replace(/\.00$/, "").replace(/0$/, "") + (SUFFIXES[tier] || `e${tier*3}`);
+    }
+
+    function getUpgradeCost(baseCost, owned, scale = 1.15) { return Math.floor(baseCost * Math.pow(scale, owned)); }
+    function getMultiplier() { return 1 + (gameState.goldenTags * 0.15); }
+    function getBaseClickPower() {
+      let power = 1;
+      UPGRADES_CATALOG.forEach(u => { if (u.cpcBonus > 0) power += (gameState.owned[u.id] || 0) * u.cpcBonus; });
+      return power * getMultiplier() * (1 + (gameState.powerups.treatDoubler * 0.1));
+    }
+    function getEffectiveClickPower() {
+      const base = getBaseClickPower();
+      if (activeFrenzy.timer > 0) return base * (activeFrenzy.type === 'cosmic' ? 25 : 7);
+      return base;
+    }
+    function getTotalTPS() {
+      let tps = 0;
+      UPGRADES_CATALOG.forEach(u => { if (u.tpsBonus > 0) tps += (gameState.owned[u.id] || 0) * u.tpsBonus; });
+      tps *= getMultiplier();
+      if (Date.now() < gameState.powerups.zoomiesEndsAt) tps *= 3;
+      return tps;
+    }
+    function getCurrentRankTitle() {
+      let current = RANKS[0].title[gameState.language];
+      for (const r of RANKS) { if (gameState.highBalance >= r.threshold) current = r.title[gameState.language]; }
+      return current;
+    }
+    function calculatePendingTags() { return Math.max(0, Math.floor(Math.sqrt(gameState.lifetimeTreats / 10000000)) - gameState.goldenTags); }
+
+    let firstClickAudioStarted = false;
+    let clickCountSinceLast = 0;
+    let clickTimer = null;
+    function tryStartBgMusicOnFirstInteraction() { if (!firstClickAudioStarted) { firstClickAudioStarted = true; if (!gameState.muted) bgm.play().catch(() => {}); } }
+    window.addEventListener("pointerdown", tryStartBgMusicOnFirstInteraction, { once: true });
+
+    function playSoundEffect(type = "pop") {
+      if (gameState.muted) return;
+      if (type === "pop") {
+        const s = audioPool.click[audioPool.idx.click];
+        audioPool.idx.click = (audioPool.idx.click + 1) % audioPool.click.length;
+        s.currentTime = 0;
+        clickCountSinceLast++; clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCountSinceLast = 0; }, 500);
+        s.playbackRate = Math.min(1.0 + (clickCountSinceLast * 0.02), 2.0);
+        if ('preservesPitch' in s) s.preservesPitch = false;
+        if ('mozPreservesPitch' in s) s.mozPreservesPitch = false;
+        if ('webkitPreservesPitch' in s) s.webkitPreservesPitch = false;
+        s.play().catch(()=>{});
+      } else if (type === "crit") {
+        const s = audioPool.crit[audioPool.idx.crit];
+        audioPool.idx.crit = (audioPool.idx.crit + 1) % audioPool.crit.length;
+        s.currentTime = 0; s.play().catch(()=>{});
+      } else if (type === "buy") {
+        const s = audioPool.buy[audioPool.idx.buy];
+        audioPool.idx.buy = (audioPool.idx.buy + 1) % audioPool.buy.length;
+        s.currentTime = 0; s.play().catch(()=>{});
+      } else if (type === "frenzy") {
+        const s = audioPool.frenzy[audioPool.idx.frenzy];
+        audioPool.idx.frenzy = (audioPool.idx.frenzy + 1) % audioPool.frenzy.length;
+        s.currentTime = 0; s.play().catch(()=>{});
+      }
+    }
+
+    /********************************************************************
+     * 5. DOM CACHE & I18N
+     ********************************************************************/
+    const dom = {
+      langSelect: document.getElementById("langSelect"), soundBtn: document.getElementById("soundToggleBtn"),
+      shopList: document.getElementById("shopList"), powerupsList: document.getElementById("powerupsList"),
+      tabUpgrades: document.getElementById("tabUpgradesBtn"), tabPowerups: document.getElementById("tabPowerupsBtn"),
+      treatCounter: document.getElementById("treatCounter"), tpsDisplay: document.getElementById("tpsDisplay"),
+      tpcDisplay: document.getElementById("tpcDisplay"), rankBadge: document.getElementById("rankBadge"),
+      frenzyBanner: document.getElementById("frenzyBanner"), frenzyText: document.getElementById("frenzyText"),
+      frenzyTimer: document.getElementById("frenzyTimer"), statClicks: document.getElementById("statClicks"),
+      statCrits: document.getElementById("statCrits"), statBones: document.getElementById("statBones"),
+      statTags: document.getElementById("statTags"), uiCritLbl: document.getElementById("ui-crit-lbl"),
+      hudBoard: document.getElementById("hudBoard"), rebirthBtn: document.getElementById("rebirthBtn"),
+      pendingTagsDisplay: document.getElementById("pendingTagsDisplay"), dogButton: document.getElementById("dogButton"),
+      dogAura: document.getElementById("dogAura"), clickArena: document.getElementById("clickArena")
+    };
+    const uiCache = { upgrades: {}, powerups: {} };
+
+    dom.tabUpgrades.addEventListener("click", () => {
+      dom.tabUpgrades.classList.add("active"); dom.tabPowerups.classList.remove("active");
+      dom.shopList.style.display = "flex"; dom.powerupsList.style.display = "none";
+    });
+    dom.tabPowerups.addEventListener("click", () => {
+      dom.tabPowerups.classList.add("active"); dom.tabUpgrades.classList.remove("active");
+      dom.powerupsList.style.display = "flex"; dom.shopList.style.display = "none";
+    });
+
+    function setText(el, text) {
+      if (el && el.textContent !== text) el.textContent = text;
+    }
+
+    function applyLanguage() {
+      const t = I18N[gameState.language];
+      document.getElementById("ui-title").textContent = t.title;
+      document.getElementById("ui-treats-lbl").textContent = t.treats;
+      document.getElementById("ui-tps-lbl").textContent = t.tps;
+      document.getElementById("ui-tpc-lbl").textContent = t.tpc;
+      document.getElementById("ui-stat-clicks").textContent = t.statClicks;
+      document.getElementById("ui-stat-crits").textContent = t.statCrits;
+      document.getElementById("ui-stat-bones").textContent = t.statBones;
+      document.getElementById("ui-stat-peak").textContent = t.statPeak;
+      document.getElementById("ui-stat-tags").textContent = t.statTags;
+      
+      const statTags2 = document.getElementById("ui-stat-tags2");
+      if(statTags2) statTags2.textContent = t.statTags.replace(":", "");
+      
+      document.getElementById("ui-rebirth-btn").textContent = t.rebirthBtn;
+      document.getElementById("resetBtn").textContent = t.resetBtn;
+      dom.tabUpgrades.textContent = t.tabUpgrades; 
+      dom.tabPowerups.textContent = t.tabPowerups;
+      
+      document.getElementById("ui-modal-title").textContent = t.modalTitle;
+      document.getElementById("ui-modal-p1").textContent = t.modalP1;
+      document.getElementById("ui-modal-earn").textContent = t.modalEarn;
+      document.getElementById("ui-modal-tags").textContent = t.modalTags;
+      document.getElementById("ui-modal-p2").childNodes[0].textContent = t.modalP2Pre + " ";
+      document.getElementById("ui-modal-p2").childNodes[2].textContent = " " + t.modalP2Mid + " ";
+      document.getElementById("btnConfirmRebirth").textContent = t.btnConfirm;
+      document.getElementById("btnCancelRebirth").textContent = t.btnCancel;
+      
+      syncSoundButtonUI(); buildShopCards(); buildPowerupCards(); updateUI();
+    }
+    dom.langSelect.addEventListener("change", (e) => { gameState.language = e.target.value; applyLanguage(); saveGame(); });
+
+    /********************************************************************
+     * 6. RENDER CARDS (Cached for 60FPS)
+     ********************************************************************/
+    function buildShopCards() {
+      Array.from(dom.shopList.querySelectorAll(".upgrade-card")).forEach(c => c.remove());
+      UPGRADES_CATALOG.forEach(upg => {
+        const card = document.createElement("div"); card.className = "upgrade-card"; card.id = `card-${upg.id}`;
+        card.addEventListener("click", () => buyUpgrade(upg.id));
+        const benefitText = upg.cpcBonus > 0 && upg.tpsBonus > 0 ? `+${formatNumber(upg.cpcBonus)} Click / +${formatNumber(upg.tpsBonus)} TPS` : upg.cpcBonus > 0 ? `+${formatNumber(upg.cpcBonus)} Click` : `+${formatNumber(upg.tpsBonus)} TPS`;
+        card.innerHTML = `<div class="icon-slot"><div class="shop-item-svg">${upg.svgIcon}</div></div><div class="info-col"><div class="title">${upg.name[gameState.language]}</div><div class="desc">${upg.desc[gameState.language]}</div><div class="meta-row"><span class="cost" id="cost-${upg.id}">🦴 0</span><span class="benefit">${benefitText}</span></div></div><div class="owned-badge" id="owned-${upg.id}">0</div>`;
+        dom.shopList.appendChild(card);
+        uiCache.upgrades[upg.id] = { card, cost: card.querySelector(`#cost-${upg.id}`), owned: card.querySelector(`#owned-${upg.id}`) };
+      });
+    }
+
+    function buildPowerupCards() {
+      dom.powerupsList.innerHTML = ""; const t = I18N[gameState.language];
+      PU_CATALOG.forEach(pu => {
+        const card = document.createElement("div"); card.className = "powerup-card"; card.id = `pu-${pu.id}`;
+        let actionHTML = pu.type === "active" 
+          ? `<div class="pu-action-row"><button class="pu-btn" id="pubtn-${pu.id}" onclick="triggerPowerup('${pu.id}', event)">${t.btnActivate}</button><div class="pu-bar-bg"><div class="pu-bar-fill" id="pubar-${pu.id}"></div></div></div>`
+          : `<div class="pu-action-row"><button class="pu-btn" id="pubtn-${pu.id}" onclick="triggerPowerup('${pu.id}', event)">🦴 ${formatNumber(pu.baseCost)}</button><span class="benefit" id="pulvl-${pu.id}"></span></div>`;
+        card.innerHTML = `<div class="icon-slot"><div class="shop-item-svg">${pu.svg}</div></div><div class="info-col"><div class="title">${pu.name[gameState.language]}</div><div class="desc">${pu.desc[gameState.language]}</div>${actionHTML}</div>`;
+        dom.powerupsList.appendChild(card);
+        uiCache.powerups[pu.id] = { card, btn: card.querySelector(`#pubtn-${pu.id}`), bar: card.querySelector(`#pubar-${pu.id}`), lvl: card.querySelector(`#pulvl-${pu.id}`) };
+      });
+    }
+
+    function updateUI() {
+      const t = I18N[gameState.language]; const now = Date.now();
+      
+      setText(dom.uiCritLbl, t.critPre + (gameState.powerups.luckyWhiskers ? 20 : 10) + t.critPost);
+      setText(dom.treatCounter, formatNumber(gameState.treats));
+      setText(dom.tpsDisplay, formatNumber(getTotalTPS()));
+      setText(dom.tpcDisplay, formatNumber(getEffectiveClickPower()));
+      setText(dom.rankBadge, getCurrentRankTitle());
+      setText(dom.statClicks, formatNumber(gameState.totalClicks));
+      setText(dom.statCrits, formatNumber(gameState.totalCrits));
+      setText(dom.statBones, `${gameState.goldenBonesCaught} G | ${gameState.diamondBonesCaught} D | ${gameState.cosmicBonesCaught} C`);
+      setText(document.getElementById("statHighBalance"), formatNumber(gameState.highBalance));
+      setText(dom.statTags, `${formatNumber(gameState.goldenTags)} (+${gameState.goldenTags * 15}%)`);
+
+      const pending = calculatePendingTags();
+      if (gameState.lifetimeTreats >= 10000000) { dom.rebirthBtn.style.display = "block"; setText(dom.pendingTagsDisplay, formatNumber(pending)); } else { dom.rebirthBtn.style.display = "none"; }
+
+      if (activeFrenzy.timer > 0) {
+        dom.frenzyBanner.classList.add("active"); setText(dom.frenzyTimer, activeFrenzy.timer.toFixed(1));
+        if (activeFrenzy.type === 'cosmic') {
+          dom.frenzyBanner.classList.add("cosmic"); setText(dom.frenzyText, t.frenzyCosmic);
+          dom.dogButton.className = "dog-button frenzy-cosmic"; dom.dogAura.className = "dog-aura frenzy-cosmic"; dom.clickArena.className = "click-arena frenzy-cosmic";
+        } else {
+          dom.frenzyBanner.classList.remove("cosmic"); setText(dom.frenzyText, t.frenzyGold);
+          dom.dogButton.className = "dog-button frenzy-golden"; dom.dogAura.className = "dog-aura frenzy-golden"; dom.clickArena.className = "click-arena frenzy-golden";
+        }
+      } else {
+        dom.frenzyBanner.classList.remove("active", "cosmic"); dom.dogButton.className = "dog-button"; dom.dogAura.className = "dog-aura"; dom.clickArena.className = "click-arena";
+      }
+
+      if (now < gameState.powerups.zoomiesEndsAt) dom.hudBoard.classList.add("sugar-rush-active"); else dom.hudBoard.classList.remove("sugar-rush-active");
+
+      UPGRADES_CATALOG.forEach(upg => {
+        const cost = getUpgradeCost(upg.baseCost, gameState.owned[upg.id] || 0); const nodes = uiCache.upgrades[upg.id];
+        if(nodes && nodes.card){
+          setText(nodes.cost, `🦴 ${formatNumber(cost)}`); setText(nodes.owned, gameState.owned[upg.id] || 0);
+          if (gameState.treats >= cost) nodes.card.classList.remove("locked"); else nodes.card.classList.add("locked");
+        }
+      });
+
+      PU_CATALOG.forEach(pu => {
+        const nodes = uiCache.powerups[pu.id]; if(!nodes || !nodes.card) return;
+        if (pu.type === "active") {
+          const readyAt = gameState.powerups[`${pu.id}ReadyAt`] || 0; const endsAt = gameState.powerups[`${pu.id}EndsAt`] || 0;
+          if (now < endsAt) {
+            setText(nodes.btn, t.btnActivate); nodes.btn.disabled = true; nodes.card.classList.add("locked");
+            nodes.bar.className = "pu-bar-fill"; nodes.bar.style.width = Math.max(0, (endsAt - now) / (pu.duration * 10)) + "%";
+          } else if (now < readyAt) {
+            setText(nodes.btn, Math.ceil((readyAt - now)/1000) + "s"); nodes.btn.disabled = true; nodes.card.classList.add("locked");
+            nodes.bar.className = "pu-bar-fill cooldown"; nodes.bar.style.width = Math.max(0, (readyAt - now) / (pu.cooldown * 10)) + "%";
+          } else {
+            setText(nodes.btn, pu.cost === 0 ? t.btnFree : t.btnActivate); nodes.btn.disabled = false; nodes.card.classList.remove("locked");
+            nodes.bar.className = "pu-bar-fill"; nodes.bar.style.width = "100%";
+          }
+        } 
+        else if (pu.id === "lucky") {
+          if (gameState.powerups.luckyWhiskers) {
+            setText(nodes.btn, t.btnMax); nodes.btn.disabled = true; nodes.card.classList.add("locked"); if(nodes.lvl) setText(nodes.lvl, "20x");
+          } else {
+            setText(nodes.btn, `🦴 ${formatNumber(pu.baseCost)}`); nodes.btn.disabled = false;
+            if (gameState.treats >= pu.baseCost) nodes.card.classList.remove("locked"); else nodes.card.classList.add("locked");
+          }
+        }
+        else if (pu.id === "doubler") {
+          const lvl = gameState.powerups.treatDoubler;
+          if (lvl >= pu.maxLevel) {
+            setText(nodes.btn, t.btnMax); nodes.btn.disabled = true; nodes.card.classList.add("locked");
+            if(nodes.lvl) setText(nodes.lvl, `${t.txtLevel} ${lvl} / ${pu.maxLevel}`);
+          } else {
+            const cost = getUpgradeCost(pu.baseCost, lvl, pu.scale);
+            setText(nodes.btn, `🦴 ${formatNumber(cost)}`); nodes.btn.disabled = false;
+            if(nodes.lvl) setText(nodes.lvl, `${t.txtLevel} ${lvl} / ${pu.maxLevel}`);
+            if (gameState.treats >= cost) nodes.card.classList.remove("locked"); else nodes.card.classList.add("locked");
+          }
+        }
+      });
+    }
+
+    function buyUpgrade(id) {
+      const upg = UPGRADES_CATALOG.find(u => u.id === id); if (!upg) return;
+      const owned = gameState.owned[id] || 0; const cost = getUpgradeCost(upg.baseCost, owned);
+      if (gameState.treats >= cost) { gameState.treats -= cost; gameState.owned[id] = owned + 1; playSoundEffect("buy"); updateUI(); saveGame(); }
+    }
+
+    function triggerPowerup(id, e) {
+      if(e) e.stopPropagation();
+      const pu = PU_CATALOG.find(u => u.id === id); if (!pu) return;
+      const now = Date.now();
+      if (pu.type === "active") {
+        const readyAt = gameState.powerups[`${id}ReadyAt`] || 0;
+        if (now >= readyAt) {
+          gameState.powerups[`${id}EndsAt`] = now + (pu.duration * 1000);
+          gameState.powerups[`${id}ReadyAt`] = now + (pu.cooldown * 1000);
+          if (id === "magnet") { spawnSpecialBoneEvent(); setTimeout(spawnSpecialBoneEvent, 300); }
+          playSoundEffect("frenzy"); updateUI(); saveGame();
+        }
+      } 
+      else if (id === "lucky" && !gameState.powerups.luckyWhiskers) {
+        if (gameState.treats >= pu.baseCost) { gameState.treats -= pu.baseCost; gameState.powerups.luckyWhiskers = true; playSoundEffect("buy"); updateUI(); saveGame(); }
+      } 
+      else if (id === "doubler") {
+        const lvl = gameState.powerups.treatDoubler;
+        if (lvl < pu.maxLevel) {
+          const cost = getUpgradeCost(pu.baseCost, lvl, pu.scale);
+          if (gameState.treats >= cost) { gameState.treats -= cost; gameState.powerups.treatDoubler++; playSoundEffect("buy"); updateUI(); saveGame(); }
+        }
+      }
+    }
+
+    /********************************************************************
+     * 7. REBIRTH MECHANIC
+     ********************************************************************/
+    dom.rebirthBtn.addEventListener("click", () => {
+      const pending = calculatePendingTags();
+      if (pending <= 0 && gameState.goldenTags === 0) return; 
+      setText(document.getElementById("modalTagEarn"), formatNumber(pending));
+      setText(document.getElementById("modalCurMult"), (gameState.goldenTags * 15) + "%");
+      setText(document.getElementById("modalNewMult"), ((gameState.goldenTags + pending) * 15) + "%");
+      document.getElementById("rebirthModal").classList.add("open");
+    });
+    document.getElementById("btnCancelRebirth").addEventListener("click", () => { document.getElementById("rebirthModal").classList.remove("open"); });
+    document.getElementById("btnConfirmRebirth").addEventListener("click", () => {
+      gameState.goldenTags += calculatePendingTags();
+      gameState.treats = 0; gameState.highBalance = 0; activeFrenzy = { type: null, timer: 0 };
+      UPGRADES_CATALOG.forEach(u => { gameState.owned[u.id] = 0; });
+      document.getElementById("rebirthModal").classList.remove("open");
+      playSoundEffect("buy"); updateUI(); saveGame();
+    });
+
+    /********************************************************************
+     * 8. CLICK & EVENTS (Zero Layout Thrashing)
+     ********************************************************************/
+    function spawnFloatingNumber(x, y, text, extraClass = "") {
+      const el = document.createElement("div"); el.className = `floating-number ${extraClass}`; el.textContent = text;
+      el.style.left = `${x}px`; el.style.top = `${y}px`; document.body.appendChild(el); setTimeout(() => el.remove(), 1400);
+    }
+
+    function spawnBoneBurstBehindDog(isCrit = false) {
+      const count = 2 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < count; i++) {
+        const bone = document.createElement("img"); bone.src = isCrit ? sparkleImg : particleImg; bone.className = "drifting-bone";
+        const angle = Math.random() * Math.PI * 2; const dist = 125 + Math.random() * 65;
+        bone.style.setProperty("--dx", `${Math.cos(angle) * dist}px`); bone.style.setProperty("--dy", `${Math.sin(angle) * dist}px`);
+        bone.style.setProperty("--rot", `${(Math.random() * 260 - 130).toFixed(0)}deg`);
+        document.getElementById("boneBurstLayer").appendChild(bone); setTimeout(() => bone.remove(), 880);
+      }
+    }
+
+    function doManualClick(e, isAuto = false) {
+      if(!isAuto) tryStartBgMusicOnFirstInteraction();
+      const isCrit = Math.random() < 0.03; const baseYield = getEffectiveClickPower();
+      const earned = isCrit ? baseYield * (gameState.powerups.luckyWhiskers ? 20 : 10) : baseYield;
+
+      gameState.treats += earned; gameState.lifetimeTreats += earned;
+      gameState.totalClicks += 1; if (isCrit) gameState.totalCrits += 1;
+
+      if (isCrit) {
+        dom.dogButton.animate([
+          { transform: 'translate(0, 0) scale(0.95)' }, { transform: 'translate(-7px, 4px) rotate(-3deg) scale(0.97)' },
+          { transform: 'translate(7px, -4px) rotate(3deg) scale(0.97)' }, { transform: 'translate(-5px, -3px) rotate(-2deg) scale(0.96)' },
+          { transform: 'translate(5px, 3px) rotate(2deg) scale(0.96)' }, { transform: 'translate(0, 0) scale(1)' }
+        ], { duration: 240, easing: 'ease-in-out' });
+        playSoundEffect("crit");
+      } else {
+        dom.dogButton.animate([ { transform: 'scale(0.91)' }, { transform: 'scale(1)' } ], { duration: 85, easing: 'ease-out' });
+        if(!isAuto) playSoundEffect("pop");
+      }
+
+      if(!isAuto || isCrit) {
+        const rect = dom.dogButton.getBoundingClientRect();
+        const clickX = (e && e.clientX) ? e.clientX : (rect.left + rect.width / 2 + (Math.random()*40-20));
+        const clickY = (e && e.clientY) ? e.clientY : (rect.top + rect.height / 2 + (Math.random()*40-20));
+        const t = I18N[gameState.language];
+        spawnFloatingNumber(clickX, clickY, isCrit ? `${t.floatCrit} +${formatNumber(earned)}` : `+${formatNumber(earned)}`, isCrit ? "crit" : "");
+        spawnBoneBurstBehindDog(isCrit);
+      }
+    }
+
+    dom.dogButton.addEventListener("pointerdown", (e) => doManualClick(e));
+
+    function spawnSpecialBoneEvent() {
+      const rect = dom.clickArena.getBoundingClientRect(); if (rect.width < 100 || rect.height < 100) return;
+      const roll = Math.random() * 100;
+      let type = 'golden', imgSrc = goldBoneImg;
+      if (roll >= 95) { type = 'cosmic'; imgSrc = cosmicBoneImg; } else if (roll >= 75) { type = 'diamond'; imgSrc = diamondBoneImg; }
+
+      const boneBtn = document.createElement("div"); boneBtn.className = `special-bone-event bone-${type}`;
+      boneBtn.innerHTML = `<img src="${imgSrc}" style="width:100%;height:100%;object-fit:contain;" />`;
+
+      const fromLeft = Math.random() < 0.5;
+      const startX = fromLeft ? -90 : rect.width + 20; const endX = fromLeft ? rect.width + 20 : -90;
+      const startY = 40 + Math.random() * (rect.height * 0.35); const endY = rect.height * 0.55 + Math.random() * (rect.height * 0.32);
+
+      boneBtn.style.left = `${startX}px`; boneBtn.style.top = `${startY}px`; dom.clickArena.appendChild(boneBtn);
+      const flightAnim = boneBtn.animate([ { left: `${startX}px`, top: `${startY}px`, opacity: 0.95 }, { left: `${endX}px`, top: `${endY}px`, opacity: 0.95 } ], { duration: type === 'cosmic' ? 5200 : 8000, easing: "linear", fill: "forwards" });
+
+      let collected = false;
+      boneBtn.addEventListener("pointerdown", (e) => {
+        e.stopPropagation(); if (collected) return; collected = true;
+        const clickX = e.clientX || rect.left + rect.width / 2; const clickY = e.clientY || rect.top + rect.height / 2;
+        const t = I18N[gameState.language];
+
+        if (type === 'golden') {
+          gameState.goldenBonesCaught++; activeFrenzy = { type: 'golden', timer: 15.0 }; playSoundEffect("frenzy"); spawnFloatingNumber(clickX, clickY, t.frenzyGold, "crit");
+        } else if (type === 'diamond') {
+          gameState.diamondBonesCaught++; const bounty = Math.max(getTotalTPS() * 600, getEffectiveClickPower() * 300);
+          gameState.treats += bounty; gameState.lifetimeTreats += bounty; playSoundEffect("frenzy"); spawnFloatingNumber(clickX, clickY, `+${formatNumber(bounty)} ${t.floatBounty}`, "bounty");
+        } else if (type === 'cosmic') {
+          gameState.cosmicBonesCaught++; activeFrenzy = { type: 'cosmic', timer: 10.0 }; playSoundEffect("frenzy"); spawnFloatingNumber(clickX, clickY, t.frenzyCosmic, "bounty");
+        }
+        flightAnim.cancel(); boneBtn.remove(); updateUI();
+      });
+      flightAnim.onfinish = () => { if (!collected && boneBtn.parentNode) boneBtn.remove(); };
+    }
+    
+    function scheduleNextBone() {
+      setTimeout(() => { spawnSpecialBoneEvent(); scheduleNextBone(); }, 45000 + Math.random() * 15000);
+    }
+    scheduleNextBone();
+
+    function syncSoundButtonUI() {
+      const t = I18N[gameState.language];
+      if (gameState.muted) { setText(dom.soundBtn, t.soundOff); dom.soundBtn.classList.remove("sound-on"); bgm.pause(); } 
+      else { setText(dom.soundBtn, t.soundOn); dom.soundBtn.classList.add("sound-on"); if (firstClickAudioStarted) bgm.play().catch(() => {}); }
+    }
+    dom.soundBtn.addEventListener("click", () => { tryStartBgMusicOnFirstInteraction(); gameState.muted = !gameState.muted; syncSoundButtonUI(); saveGame(); });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Reset ALL progress including lifetime stats and tags?")) {
+        const keepMute = gameState.muted; const keepLang = gameState.language;
+        gameState = createDefaultState(); gameState.muted = keepMute; gameState.language = keepLang;
+        activeFrenzy = { type: null, timer: 0 }; saveGame(); applyLanguage();
+      }
+    });
+
+    /********************************************************************
+     * 12. GAME LOOP (Throttled UI Updates for Zero Lag)
+     ********************************************************************/
+    let lastTickTime = performance.now();
+    let lastUiUpdateTime = 0;
+
+    function gameLoop(now) {
+      const dt = Math.max(0, (now - lastTickTime) / 1000);
+      lastTickTime = now;
+
+      const tps = getTotalTPS();
+      if (tps > 0) { const earned = tps * dt; gameState.treats += earned; gameState.lifetimeTreats += earned; }
+
+      if (activeFrenzy.timer > 0) {
+        activeFrenzy.timer = Math.max(0, activeFrenzy.timer - dt);
+        const targetSpeed = activeFrenzy.type === 'cosmic' ? 1.3 : 1.5;
+        if (bgm.playbackRate !== targetSpeed) bgm.playbackRate = targetSpeed;
+      } else {
+        activeFrenzy.type = null;
+        if (bgm.playbackRate !== 1.0) bgm.playbackRate = 1.0;
+      }
+
+      if (Date.now() < gameState.powerups.blitzEndsAt) {
+        blitzAccumulator += dt * 25; const clicksToDo = Math.floor(blitzAccumulator);
+        if (clicksToDo > 0) { blitzAccumulator -= clicksToDo; for(let i=0; i<clicksToDo; i++) doManualClick(null, true); }
+      }
+
+      // Throttle heavy DOM updates to 10 FPS to prevent text jitter
+      if (now - lastUiUpdateTime > 100) {
+        updateUI();
+        lastUiUpdateTime = now;
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+
+    loadGame(); applyLanguage(); 
+    requestAnimationFrame((now) => { lastTickTime = now; requestAnimationFrame(gameLoop); });
+    setInterval(saveGame, 3000);
+  </script>
+</body>
+</html>
